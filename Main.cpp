@@ -24,6 +24,14 @@ using namespace std;
 
 class Game;
 
+//----------------------------------------------------------------
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <string.h>
+#include <iostream>
+#include <string>
+
+using namespace std;
 
 class Board{
 private:
@@ -178,18 +186,14 @@ public:
 	//[]operator
 
 	char operator[](int index);
-
 };
-//----------------------------------------------------------------
-
 //================ OPERATOR OVERLOADING ===============
-
 
 char Board::operator[](int index){
 	if(0<=index&&index<=strlen(this->boardName)){
 		return boardName[index];
 	} 
-	cout<<"Wrong index";
+	std::cout<<"Wrong index";
 }
 
 Board Board::operator++(int){
@@ -251,7 +255,7 @@ ostream& operator<<(ostream& out, const Board& board){
 }
 
 istream& operator>>(istream& in, Board& board){
-	cout<<"Game name: ";
+	std::cout<<"Game name: ";
 	char aux[500];
 	in>>aux;
 
@@ -266,9 +270,6 @@ istream& operator>>(istream& in, Board& board){
 //================END OF OPERATOR OVERLOADING===================
 
 //================ DEFINITIONS OF SDL FUNCTIONS ================
-
-
-
 
 Board::Board(Board& board) : WINDOW_WIDTH(board.WINDOW_WIDTH), WINDOW_HEIGHT(board.WINDOW_HEIGHT), CELL_WIDTH(board.CELL_WIDTH), CELL_HEIGHT(board.CELL_HEIGHT){
 	window = NULL;
@@ -356,7 +357,7 @@ void Board::undoPiece(int coordX, int coordY){
 SDL_Texture* Board::loadImage(string filename){
 	//loading image
 	if(IMG_Init(IMG_INIT_PNG)<0){
-		cout<<"Couldn't initialize SDL_Image: "<<SDL_GetError()<<endl; 
+		std::cout<<"Couldn't initialize SDL_Image: "<<SDL_GetError()<<endl; 
 	}
 
 	SDL_Surface* image=NULL;
@@ -364,7 +365,7 @@ SDL_Texture* Board::loadImage(string filename){
 
 	if(image==NULL){
 		
-		cout<<"Couldn't load "<<filename<<":"<<SDL_GetError<<endl;
+		std::cout<<"Couldn't load "<<filename<<":"<<SDL_GetError<<endl;
 
 	}
 
@@ -380,27 +381,27 @@ bool Board::init(){
 
 	if(SDL_Init(SDL_INIT_VIDEO)<0){
 
-		cout<<"Couldn't initialize SDL: "<<SDL_GetError()<<endl;
+		std::cout<<"Couldn't initialize SDL: "<<SDL_GetError()<<endl;
 		clean();
 		return false;
 
 	}
-	cout<<"SDL initialized!"<<endl;
+	std::cout<<"SDL initialized!"<<endl;
 	window=SDL_CreateWindow("Chess(not finished)", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
 
 	if(window==NULL){
 
-		cout<<"Couldn't initialize window: "<<SDL_GetError<<endl;
+		std::cout<<"Couldn't initialize window: "<<SDL_GetError<<endl;
 
 	}
 
 	else{
-		cout<<"Window initialized!"<<endl;
+		std::cout<<"Window initialized!"<<endl;
 		renderer=SDL_CreateRenderer(window, -1, 0);
 		
 		//  if (renderer) {
 		//  	surface=SDL_GetWindowSurface(window);
-		//  	std::cout << "Renderer created!"<<endl;
+		//  	std::std::cout << "Renderer created!"<<endl;
 		//   	renderBackground();
 		//  	SDL_RenderPresent(renderer);
 		//  }
@@ -423,17 +424,16 @@ void Board::clean(){
 
 }
 
-Board::~Board(){
-	clean();
+Board::~Board(){	
+    clean();
 }
 
 //================END OF DEFINITIONS OF SDL FUNCTIONS================
 
 //----------------------------------------------------------------
 class King;
-
+//----------------------------------------------------------------
 class Piece{
-	friend Game;
 public:
 	//type of piece
 	enum class PieceType {Empty, PAWN, ROOK, BISHOP, KNIGHT, QUEEN, KING};
@@ -659,10 +659,7 @@ protected:
 
 	King* teamsKing(Piece* backBoard[8][8]);
 };
-//----------------------------------------------------------------
-
 //==================OPERATOR OVERLOADING=============
-
 char* Piece::operator[](int index){
 	if(0<=index && index < this->moveRecording.size())
 		return this->moveRecording[index];
@@ -730,15 +727,11 @@ Piece& Piece::operator=(const Piece& p){
 	
 	return *this;
 }
-
-
 //==================END OF OPERATOR OVERLOADING======
 
 //==================PIECE FUNCTIONS==================
-
-//for 50 move rule(not implemented)
-
 int Piece::movesFromLastCapture = 0;
+//for 50 move rule(not implemented)
 
 void Piece::moveRecord(char moveRow, char moveColumn, char movePiece){
 	char aux[4];
@@ -762,7 +755,7 @@ void Piece::render(){
 
 	//the integers below are for centering the pieces on the squares
 
-	SDL_Rect destination = {univHandler->CELL_WIDTH*pos.xCoord+10,univHandler->CELL_HEIGHT*pos.yCoord+10, univHandler->CELL_WIDTH-20, univHandler->CELL_HEIGHT-20};
+	SDL_Rect destination = {univHandler->getCellWidth()*pos.xCoord+10,univHandler->getCellHeight()*pos.yCoord+10, univHandler->getCellWidth()-20, univHandler->getCellHeight()-20};
 	univHandler->drawRect(source, destination, texture);
 }
 
@@ -2127,7 +2120,7 @@ void Game::normalMove(int xs, int ys, int xe, int ye){
 	//and renders it where the player moves it
 
 	pieceField[xe][ye] = getPositionInField(xs, ys);
-	pieceField[xe][ye]->hasMoved = true;
+	pieceField[xe][ye]->setHasMoved(true);
 	pieceField[xs][ys]=nullptr;
 	univHandle->undoPiece(xs, ys);
 	Piece::PiecePosition posi;
@@ -3007,7 +3000,7 @@ void Game::enPassant(int xs, int ys, int xe, int ye){
 	Pawn* pawnStart = (Pawn*)pieceField[xs][ys];
 	pieceField[xe][ye-pawnStart->movementDirection] = nullptr;	
 	pieceField[xe][ye]=getPositionInField(xs, ys);
-	pieceField[xe][ye]->hasMoved=true;
+	pieceField[xe][ye]->setHasMoved(true);
 	pieceField[xs][ys]=nullptr;
 	univHandle->undoPiece(xs, ys);
 	univHandle->undoPiece(xe, ye-pawnStart->movementDirection);
@@ -3024,8 +3017,8 @@ void Game::castleMove(int xs, int ys, int xe, int ye){
 	if(xe==0){
 		pieceField[1][ye]= pieceField[3][ye];
 		pieceField[2][ye]= pieceField[0][ye];
-		pieceField[1][ye]->hasMoved=true;
-		pieceField[2][ye]->hasMoved=true;
+		pieceField[1][ye]->setHasMoved(true);
+		pieceField[2][ye]->setHasMoved(true);
 		posit.xCoord=2;
 		posit.yCoord=ye;
 		
@@ -3043,8 +3036,8 @@ void Game::castleMove(int xs, int ys, int xe, int ye){
 	else{
 		pieceField[6][ye]= pieceField[3][ye];
 		pieceField[5][ye]= pieceField[7][ye];
-		pieceField[6][ye]->hasMoved=true;
-		pieceField[5][ye]->hasMoved=true;
+		pieceField[6][ye]->setHasMoved(true);
+		pieceField[5][ye]->setHasMoved(true);
 		posit.xCoord=6;
 		posit.yCoord=ye;
 		
@@ -3187,7 +3180,7 @@ Game::~Game(){
 //=============================END OF GAME FUNCTIONS===============
 
 //  __       __         ______         ______        __    __ 
-// |  \     /  \       /      \       |      \      |  \  |  \
+// |  \     /  \       /      \       |      \      |  \  |  \ 
 // | $$\   /  $$      |  $$$$$$\       \$$$$$$      | $$\ | $$
 // | $$$\ /  $$$      | $$__| $$        | $$        | $$$\| $$
 // | $$$$\  $$$$      | $$    $$        | $$        | $$$$\ $$
